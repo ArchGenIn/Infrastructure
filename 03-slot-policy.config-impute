@@ -1,0 +1,5 @@
+#NUM_CPUS=48
+#MEMORY=196608
+SLOT_TYPE_1 = cpus=1, memory=auto
+NUM_SLOTS_TYPE_1 = 32
+

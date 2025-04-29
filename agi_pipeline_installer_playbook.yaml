@@ -1,0 +1,96 @@
+#ansible-playbook -i agi_exec_inventory agi_pipeline_installer_playbook.yaml -b
+
+---
+
+- name: Install AGI pipeline softwares
+  gather_facts: false
+  hosts: agi_exec
+  tasks:
+
+  - name: install softwares from apt repositories
+    ansible.builtin.apt: 
+      name: >
+        libhtscodecs-dev, libhts-dev, 
+        libbz2-dev, zlib1g-dev, r-base, 
+        libncurses5-dev, libncursesw5-dev, 
+        liblzma-dev, libssl-dev, 
+        libgsl-dev, libcurl4-openssl-dev, 
+        libssl-dev, libopenblas-dev, 
+        fftw-dev, samtools, bamtools, 
+        vcftools, bedtools, fastqc, 
+        seqprep, seqtk, pv, bowtie2, 
+        cutadapt, mapdamage, nfs-common,
+        glusterfs-client, bwa, bcftools
+      state: present
+
+  - name: get bamUtil
+    ansible.builtin.shell: >
+      mkdir /home/ubuntu/softwares; 
+      pushd /home/ubuntu/softwares; 
+      git clone https://github.com/statgen/bamUtil.git; 
+      pushd /home/ubuntu/softwares/bamUtil; 
+      make cloneLib; 
+      make; 
+      sudo ln -s /home/ubuntu/softwares/bamUtil/bin/bam /usr/local/bin/
+    args:
+      executable: /bin/bash
+
+  - name: get ANGSD
+    ansible.builtin.shell: >
+      mkdir /home/ubuntu/softwares/angsd/; 
+      pushd /home/ubuntu/softwares/angsd/; 
+      wget http://popgen.dk/software/download/angsd/angsd0.938.tar.gz; 
+      tar xf angsd0.938.tar.gz;
+      pushd ./angsd; 
+      make HTSSRC=systemwide;
+      sudo ln -s /home/ubuntu/softwares/angsd/angsd/angsd /usr/local/bin/
+    args:
+      executable: /bin/bash
+
+  - name: get HaploGrep
+    ansible.builtin.shell: >
+      mkdir /home/ubuntu/softwares/haplogrep/; 
+      pushd /home/ubuntu/softwares/haplogrep/; 
+      curl -sL haplogrep.now.sh | bash
+    args:
+      executable: /bin/bash
+
+  - name: mount nfs volume, and install htcondor-execute
+    ansible.builtin.shell: >
+      domainname -b agi; 
+      echo "10.1.37.57:/mnt/data /mnt/data   nfs defaults   0 0" | sudo tee -a /etc/fstab; 
+      mkdir /mnt/data/; 
+      mount -a; 
+      curl -fsSL https://get.htcondor.org | sudo GET_HTCONDOR_PASSWORD="biobaden_Paabo" /bin/bash -s -- --no-dry-run --execute 10.1.37.115; 
+      systemctl restart condor; 
+    args:
+      executable: /bin/bash
+
+  - name: htcondor owner config
+    ansible.builtin.copy:
+      src: ./02-allow_owner.config
+      dest: /etc/condor/config.d/02-allow_owner.config
+      owner: root
+      group: root
+      mode: u=rw,g=r,o=r
+
+  - name: htcondor slot config
+    ansible.builtin.copy:
+      src: ./03-slot-policy.config
+      dest: /etc/condor/config.d/03-slot-policy.config
+      owner: root
+      group: root
+      mode: u=rw,g=r,o=r
+
+  - name: mount glusterfs volume
+    ansible.builtin.shell: >
+      sudo mkdir /mnt/agi_gluster_volume;
+      sudo chown ubuntu /mnt/agi_gluster_volume/;
+      sudo chgrp ubuntu /mnt/agi_gluster_volume/;
+      sudo echo "10.1.37.38:/agi_gluster_volume /mnt/agi_gluster_volume glusterfs defaults,_netdev 0 0" | sudo tee -a /etc/fstab;
+      sudo mount -a;
+    args:
+      executable: /bin/bash
+
+  - name: reboot the machines
+    ansible.builtin.reboot:

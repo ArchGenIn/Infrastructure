@@ -1,0 +1,2 @@
+SLOT_TYPE_1 = cpus=4/32, disk=auto, mem=8/64
+NUM_SLOTS_TYPE_1 = 8

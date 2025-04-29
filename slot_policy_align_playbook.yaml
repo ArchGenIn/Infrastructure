@@ -1,0 +1,23 @@
+#ansible-playbook -i agi_exec_inventory slot_policy_align_playbook.yaml -b
+
+---
+
+- name: Configure HTCondor to Align
+  gather_facts: false
+  hosts: agi_exec
+  tasks:
+
+  - name: htcondor slot config
+    ansible.builtin.copy:
+      src: ./03-slot-policy.config-align
+      dest: /etc/condor/config.d/03-slot-policy.config
+      owner: root
+      group: root
+      mode: u=rw,g=r,o=r
+
+  - name: Restart Condor
+    ansible.builtin.shell: >
+      condor_restart
+    args:
+      executable: /bin/bash
+

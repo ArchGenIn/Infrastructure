@@ -1,0 +1,43 @@
+#cloud-config
+package_upgrade: true
+package_reboot_if_required: true
+
+power_state:
+  delay: now
+  mode: reboot
+  message: Rebooting the OS
+  condition: if [ -e /var/run/reboot-required ]; then exit 0; else exit 1; fi
+
+timezone: Europe/Budapest
+
+ntp:
+  enabled: true
+  ntp_client: chrony
+  servers:
+   - time.kfki.hu
+
+chpasswd:
+  list: |
+    ubuntu:biobudapest
+  expire: false
+
+
+ssh_authorized_keys:
+  - ssh-rsa
+
+
+packages:
+  - htop
+  - mc
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg-agent
+  - software-properties-common
+  - build-essential
+  - ifconfig
+  - autoconf
+
+  
+runcmd:
+  - echo "END OF CLOUD INIT"
