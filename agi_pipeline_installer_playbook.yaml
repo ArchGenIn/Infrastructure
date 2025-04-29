@@ -58,10 +58,10 @@
   - name: mount nfs volume, and install htcondor-execute
     ansible.builtin.shell: >
       domainname -b agi; 
-      echo "10.1.37.57:/mnt/data /mnt/data   nfs defaults   0 0" | sudo tee -a /etc/fstab; 
+      echo "10.1.0.0:/mnt/data /mnt/data   nfs defaults   0 0" | sudo tee -a /etc/fstab; 
       mkdir /mnt/data/; 
       mount -a; 
-      curl -fsSL https://get.htcondor.org | sudo GET_HTCONDOR_PASSWORD="biobaden_Paabo" /bin/bash -s -- --no-dry-run --execute 10.1.37.115; 
+      curl -fsSL https://get.htcondor.org | sudo GET_HTCONDOR_PASSWORD="" /bin/bash -s -- --no-dry-run --execute 10.1.0.0; 
       systemctl restart condor; 
     args:
       executable: /bin/bash
